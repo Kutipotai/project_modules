@@ -1,0 +1,8 @@
+setuptools
+
+requests
+psycopg2
+bs4
+lxml
+selenium
+tabulate
