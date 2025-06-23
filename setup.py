@@ -2,10 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="project-modules",  # это имя будет использоваться в импортах
-    version="0.1.0",
+    version="0.1.1",
     packages=find_packages(include=["project_modules", "project_modules.*"]),
     install_requires=[
         "requests",
+        "requests[socks]",
         "psycopg2",
         "beautifulsoup4",
         "lxml",

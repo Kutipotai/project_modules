@@ -252,13 +252,4 @@ def get_clt(*, value: str, replace_list: None | list = None):
 
 
 if __name__ == '__main__':
-    _day = 1
-    calendar_list = normal_calendar_list_v2(
-        dn=-_day,
-        up=_day,
-        _format='%Y-%m-%d',
-        _sec_offset=(4 * 60 * 60),
-    )
-    print(calendar_list)
-
     pass

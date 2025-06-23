@@ -37,7 +37,10 @@ def delete_db(*, cur=None, table_name=None, other_query=None, **kwargs):
     if other_query is None:
         other_query = ''  # 'WHERE True'
     try:
-        cur.execute(f'DELETE FROM {table_name} {other_query};')
+        query = f'DELETE FROM {table_name} {other_query};'
+        if kwargs.get('query'):
+            query = kwargs.get('query')
+        cur.execute(query)
     except sqlite3.Error as e:
         return f'delete_db: {table_name} --> {e}'
     return err
@@ -119,6 +122,8 @@ def write_db_many(*, cur=None, table_name=None, data=None, other_query=None, is_
     else:
         query += f'DO NOTHING;'
     try:
+        if kwargs.get('query'):
+            query = kwargs.get('query')
         cur.executemany(query, data)
     # except sqlite3.Error as e:
     #     err = f'write_db_meny: {table_name} --> {e}'
@@ -172,6 +177,8 @@ def read_db_many(*, cur=None, table_name=None, many_query=None, other_query=None
             output_obj = cur.execute(query, vq)
         else:
             query = f'SELECT {keys_item} FROM {table_name} {other_query};'
+            if kwargs.get('query'):
+                query = kwargs.get('query')
             output_obj = cur.execute(query)
         res_keys = [tup[0] for tup in output_obj.description]
         res_df = cur.fetchall()

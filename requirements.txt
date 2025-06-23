@@ -1,6 +1,7 @@
 setuptools
 
 requests
+requests[socks]
 psycopg2
 bs4
 lxml
