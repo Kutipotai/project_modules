@@ -4,7 +4,14 @@ setup(
     name="project_modules",  # это имя будет использоваться в импортах
     version="0.1.0",
     packages=find_packages(include=["project_modules", "project_modules.*"]),
-    install_requires=[],  # можно добавить зависимости
+    install_requires=[
+        "requests",
+        "psycopg2",
+        "beautifulsoup4",
+        "lxml",
+        "selenium",
+        "tabulate"
+    ],
     description="Общие модули и утилиты",
     author="Kutipotai",
     author_email="Kutipotai@google.com",

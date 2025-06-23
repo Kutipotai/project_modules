@@ -1,12 +1,22 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 build/
 dist/
-.env
+
+# Virtual environments
 .venv/
+env/
+ENV/
+
+# IDE
 .idea/
 .vscode/
+
+# OS
 .DS_Store
+
+# Project-specific
 
 test.py
