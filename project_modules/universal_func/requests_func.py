@@ -447,29 +447,26 @@ class ProxyManager:
 
     def request(self, url, retries=3, type_content='raw', _dv=None, **kwargs):
         err = None
-        code = 0
         res = _dv
         uts = int(time.time())
-
         if self.internet_blocked_until > uts:
-            code = 1
-            err = f'ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
-            return err, res, code
+            err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
+            res = _dv
+            return err, res
         if self.internet_blocked_until > 0:
             if not get_check_connect():
                 print("[!] Потеряно соединение с интернетом.")
                 self.internet_blocked_until = uts + self.no_internet_timeout
-                code = 1
-                err = f'ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
-                return err, res, code
+                err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
+                res = _dv
+                return err, res
             self.internet_blocked_until = 0
 
         for attempt in range(1, retries + 1):
             uts = int(time.time())
             proxy = self.get_proxy()
             if not proxy:
-                code = 1
-                err = f'ProxyManager.request: нет рабочих proxy 0/{len(self.proxies)}'
+                err = f'$1$ ProxyManager.request: нет рабочих proxy 0/{len(self.proxies)}'
                 res = _dv
                 break
             proxy_data = self.proxies[proxy]
@@ -479,12 +476,10 @@ class ProxyManager:
                 response = session.get(url, **kwargs)
                 if not (response.status_code in [200]):
                     response = None
-            except Exception as e:
+            except Exception:
                 response = None
-
             if response is None:
-                err = f'ProxyManager.request: Ошибка запроса через proxy || [{proxy}]'
-                code = 2
+                err = f'$2$ ProxyManager.request: Ошибка запроса через proxy || [{proxy}]'
                 res = _dv
                 proxy_data['errors'] += 1
                 proxy_data['timeout_until'] = uts + self.request_timeout * 2
@@ -497,7 +492,9 @@ class ProxyManager:
                     if not get_check_connect():
                         print("[!] Потеряно соединение с интернетом.")
                         self.internet_blocked_until = uts + self.no_internet_timeout
-                        return err, res, code
+                        err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
+                        res = _dv
+                        return err, res
                     else:
                         self.internet_blocked_until = -(uts + self.no_internet_timeout * 2)
                 if not get_check_connect(proxies=proxy_data['proxies']):
@@ -510,21 +507,20 @@ class ProxyManager:
             if response:
                 _err, res = response_to_data(response=response, type_content=type_content, _dv=_dv)
                 if _err:
-                    err = f'ProxyManager.{_err} || [{proxy}]'
-                    code = 3
+                    err = f'$3$ ProxyManager.{_err} || [{proxy}]'
                     res = _dv
-                return err, res, code
+                return err, res
         if not self.internet_blocked_until + uts < 0:
             if not get_check_connect():
                 print("[!] Потеряно соединение с интернетом.")
                 self.internet_blocked_until = uts + self.no_internet_timeout
-                code = 1
-                err = f'ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
-                return err, res, code
+                err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
+                res = _dv
+                return err, res
             else:
                 print("[!] Всё ок с интернетом.")
                 self.internet_blocked_until = -(uts + self.no_internet_timeout * 2)
-        return err, res, code
+        return err, res
 
 
 if __name__ == '__main__':
