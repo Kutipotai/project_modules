@@ -41,13 +41,13 @@ def get_content_urllib(
         params: dict | None = None,
         proxies: dict | None = None,
         update_url: bool = True,
-        default_value: list | dict | bool | None = False,
+        _dv: list | dict | bool | None = False,
         print_err: bool = True,
         **kwargs,
 ):
-    err, res = None, default_value
+    err, res = None, _dv
     if not url:
-        return f'url={url}', default_value
+        return f'url={url}', _dv
     if not headers:
         headers = dict()
     data = None
@@ -70,7 +70,7 @@ def get_content_urllib(
     except Exception as e:
         if print_err:
             print('get_content_urllib:', e)
-        return f'err={e}', default_value
+        return f'err={e}', _dv
     return err, res
 
 
@@ -84,13 +84,13 @@ def get_content(
         proxies=None,
         timeout=None,
         verify=True,
-        default_value=None,
+        _dv=None,
         print_err=True,
         **kwargs
 ):
 ##    connect.auth = ('user', 'pass')
 ##    connect.verify = '/path/to/certfile' / False
-    err, res = None, default_value
+    err, res = None, _dv
     if timeout:
         timeout = tuple(timeout)
     if not headers:
@@ -118,11 +118,11 @@ def get_content(
                 case 'json':
                     return err, res.json()
                 case _:
-                    return f"Not found type_content! --> {url}", default_value
+                    return f"Not found type_content! --> {url}", _dv
     except Exception as e:
         if print_err:
             print('get_content:', e)
-        return f"Error! --> {url}", default_value
+        return f"Error! --> {url}", _dv
     return err, res
 
 
@@ -137,11 +137,11 @@ def post_content(
         timeout=None,
         verify=True,
         allow_redirects=None,
-        default_value=None,
+        _dv=None,
         print_err=True,
         **kwargs
 ):
-    err, res = None, default_value
+    err, res = None, _dv
     if timeout:
         timeout = tuple(timeout)
     if not headers:
@@ -169,11 +169,11 @@ def post_content(
                 case 'json':
                     return err, res.json()
                 case _:
-                    return f"Not found type_content! --> {url}", default_value
+                    return f"Not found type_content! --> {url}", _dv
     except Exception as e:
         if print_err:
             print('post_content:', e)
-        return f"Error! --> {url}", default_value
+        return f"Error! --> {url}", _dv
     return err, res
 
 
@@ -461,7 +461,7 @@ class ProxyManager:
                 res = _dv
                 return err, res
             self.internet_blocked_until = 0
-
+        [kwargs.pop(_dkk, None) for _dkk in ['connect', 'print_err']]
         for attempt in range(1, retries + 1):
             uts = int(time.time())
             proxy = self.get_proxy()
