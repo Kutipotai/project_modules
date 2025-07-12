@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="project-modules",  # это имя будет использоваться в импортах
-    version="0.1.1",
+    version="0.1.2",
     packages=find_packages(include=["project_modules", "project_modules.*"]),
     install_requires=[
         "requests",
@@ -11,7 +11,8 @@ setup(
         "beautifulsoup4",
         "lxml",
         "selenium",
-        "tabulate"
+        "tabulate",
+        "fake_useragent",
     ],
     description="Общие модули и утилиты",
     author="Kutipotai",

@@ -528,6 +528,4 @@ class ProxyManager:
 
 
 if __name__ == '__main__':
-    # _fg = FingerprintGenerator()
-    print(FingerprintGenerator().generate())
     pass
