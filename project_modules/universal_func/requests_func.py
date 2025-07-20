@@ -151,13 +151,13 @@ def post_content(
     try:
         if connect:
             res = connect.post(
-                url, json=params, headers=headers, timeout=timeout,
+                url, data=params, headers=headers, timeout=timeout,
                 verify=verify, allow_redirects=allow_redirects,
                 proxies=_get_proxy(proxies=proxies),
             )
         else:
             res = requests.post(
-                url, json=params, headers=headers, timeout=timeout,
+                url, data=params, headers=headers, timeout=timeout,
                 verify=verify, allow_redirects=allow_redirects,
                 proxies=_get_proxy(proxies=proxies),
             )
@@ -348,7 +348,7 @@ class FingerprintGenerator:
         except Exception:
             pass
         # fallback
-        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36"
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
 
     def generate(self, platform=None, lang="en-US", timezone=None, viewport=None):
         platform = platform if platform else random.choice(self.platforms)
@@ -445,7 +445,7 @@ class ProxyManager:
             min_timeout = min(min_timeout_list)
         return max(min_timeout, self.internet_blocked_until)
 
-    def request(self, url, retries=3, type_content='raw', _dv=None, **kwargs):
+    def request(self, url, retries=3, type_content='raw', method='get', _dv=None, **kwargs):
         err = None
         res = _dv
         uts = int(time.time())
@@ -473,7 +473,13 @@ class ProxyManager:
             session = proxy_data['session']
             proxy_data['timeout_until'] = uts + self.request_timeout
             try:
-                response = session.get(url, **kwargs)
+                match method:
+                    case 'post':
+                        if 'parms' in kwargs:
+                            kwargs['data'] = kwargs.pop('parms', None)
+                        response = session.post(url, **kwargs)
+                    case _:
+                        response = session.get(url, **kwargs)
                 if not (response.status_code in [200]):
                     response = None
             except Exception:

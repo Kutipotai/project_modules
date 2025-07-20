@@ -25,6 +25,25 @@ def read_file_text(*, file_name, typ='r', enc='utf-8', rl=False, **kwargs):
     return res
 
 
+def set_tsv(*, data, file_name, is_col_name=True):
+    col_name = list()
+    text = str()
+    for d in data:
+        _t = str()
+        for k, v in d.items():
+            if not (k in col_name):
+                col_name.append(k)
+            # _t += f'{v if not (v is None) else ""}\t'
+            _t += f'{v}\t'
+        if _t:
+            text += f'{_t}\n'
+    if is_col_name:
+        _t = '\t'.join([str(x) for x in col_name])
+        text = f'{_t}\n{text}'
+    write_file_text(file_name=file_name, data=text)
+    return
+
+
 def get_json_file(*, file_name, enc='utf-8', print_err=True):
     if file_name is None:
         return dict()
@@ -249,6 +268,22 @@ def get_clt(*, value: str, replace_list: None | list = None):
         for rl in replace_list:
             value = value.replace(rl, '')
     return ' '.join(value.strip().split())
+
+
+def fix_ru_or_en_letters(text: str, lang='en') -> str:
+    if not text:
+        return text
+    chars_map = {
+        'en': {
+            'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'у': 'y', 'х': 'x',
+            'в': 'b', 'н': 'h', 'к': 'k', 'м': 'm', 'т': 't', 'п': 'n',
+        },
+        'ru': {
+            'a': 'а', 'b': 'в', 'c': 'с', 'e': 'е', 'h': 'н', 'k': 'к', 'm': 'м',
+            'o': 'о', 'p': 'р', 't': 'т', 'x': 'х', 'y': 'у', 'n': 'п',
+        }
+    }
+    return ''.join(chars_map.get(lang, dict()).get(str(char), str(char)) for char in text)
 
 
 if __name__ == '__main__':

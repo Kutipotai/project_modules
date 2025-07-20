@@ -113,6 +113,7 @@ def write_db_many(*, cur=None, table_name=None, data=None, other_query=None, is_
         ignor_keys = list()
     if other_query is None:
         other_query = ''  # 'WHERE True'
+    other_query = other_query.strip()
     arg_list = ','.join([f'{x}' for x in data[0]])
     query_insert = ','.join([f':{x}' for x in data[0]])
     query_update = ','.join([f'{x}=:{x}' for x in data[0] if not (x in ignor_keys)])
@@ -125,9 +126,7 @@ def write_db_many(*, cur=None, table_name=None, data=None, other_query=None, is_
         if kwargs.get('query'):
             query = kwargs.get('query')
         cur.executemany(query, data)
-    # except sqlite3.Error as e:
-    #     err = f'write_db_meny: {table_name} --> {e}'
-    except Exception as e:
+    except Exception as e:  # except sqlite3.Error as e:
         err = f'write_db_meny: {table_name} --> {e}'
     return err
 
@@ -162,6 +161,7 @@ def read_db_many(*, cur=None, table_name=None, many_query=None, other_query=None
             return err, def_value, list()
     if other_query is None:
         other_query = ''  # 'WHERE True'
+    other_query = other_query.strip()
     try:
         keys_item = f"{', '.join(str(x) for x in keys)}" if keys else '*'
         if many_query:
@@ -176,6 +176,8 @@ def read_db_many(*, cur=None, table_name=None, many_query=None, other_query=None
             query = f'SELECT {keys_item} FROM {table_name} {other_query};'
             output_obj = cur.execute(query, vq)
         else:
+            if other_query and not ('where' in other_query.lower()):
+                other_query = f'where {other_query}'
             query = f'SELECT {keys_item} FROM {table_name} {other_query};'
             if kwargs.get('query'):
                 query = kwargs.get('query')
@@ -184,7 +186,7 @@ def read_db_many(*, cur=None, table_name=None, many_query=None, other_query=None
         res_df = cur.fetchall()
         if is_dict:
             res_df = [{res_keys[i]: v for i, v in enumerate(row)} for row in res_df]
-    except sqlite3.Error as e:
+    except Exception as e:  # except sqlite3.Error as e:
         res_df = def_value
         res_keys = list()
         err = f'read_db_many: {table_name} --> {e}'
