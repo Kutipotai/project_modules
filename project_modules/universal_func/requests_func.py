@@ -137,6 +137,7 @@ def post_content(
         timeout=None,
         verify=True,
         allow_redirects=None,
+        params_key='json',
         _dv=None,
         print_err=True,
         **kwargs
@@ -149,17 +150,20 @@ def post_content(
     if not params:
         params = dict()
     try:
+        _kwargs = {params_key: params}
         if connect:
             res = connect.post(
-                url, data=params, headers=headers, timeout=timeout,
+                url, headers=headers, timeout=timeout,
                 verify=verify, allow_redirects=allow_redirects,
                 proxies=_get_proxy(proxies=proxies),
+                **_kwargs,
             )
         else:
             res = requests.post(
-                url, data=params, headers=headers, timeout=timeout,
+                url, headers=headers, timeout=timeout,
                 verify=verify, allow_redirects=allow_redirects,
                 proxies=_get_proxy(proxies=proxies),
+                **_kwargs,
             )
         res.encoding = 'utf-8'
         if type_content:
@@ -449,13 +453,16 @@ class ProxyManager:
         err = None
         res = _dv
         uts = int(time.time())
+        print_err = kwargs.pop('print_err', None)
+        post_params_key = kwargs.pop('post_params_key', 'json')
         if self.internet_blocked_until > uts:
             err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
             res = _dv
             return err, res
         if self.internet_blocked_until > 0:
             if not get_check_connect():
-                print("[!] Потеряно соединение с интернетом.")
+                if print_err:
+                    print("[!] Потеряно соединение с интернетом.")
                 self.internet_blocked_until = uts + self.no_internet_timeout
                 err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
                 res = _dv
@@ -475,8 +482,8 @@ class ProxyManager:
             try:
                 match method:
                     case 'post':
-                        if 'parms' in kwargs:
-                            kwargs['data'] = kwargs.pop('parms', None)
+                        if 'params' in kwargs:
+                            kwargs[post_params_key] = kwargs.pop('params', None)
                         response = session.post(url, **kwargs)
                     case _:
                         response = session.get(url, **kwargs)
@@ -496,7 +503,8 @@ class ProxyManager:
             if proxy_data['errors'] > self.limit_errors:
                 if not self.internet_blocked_until + uts < 0:
                     if not get_check_connect():
-                        print("[!] Потеряно соединение с интернетом.")
+                        if print_err:
+                            print("[!] Потеряно соединение с интернетом.")
                         self.internet_blocked_until = uts + self.no_internet_timeout
                         err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
                         res = _dv
@@ -504,7 +512,8 @@ class ProxyManager:
                     else:
                         self.internet_blocked_until = -(uts + self.no_internet_timeout * 2)
                 if not get_check_connect(proxies=proxy_data['proxies']):
-                    print(f"[!] Прокси {proxy} не работает. Тайм-аут {self.not_work_timeout} сек.")
+                    if print_err:
+                        print(f"[!] Прокси {proxy} не работает. Тайм-аут {self.not_work_timeout} сек.")
                     proxy_data['timeout_until'] = uts + self.not_work_timeout
                     self.refresh_fingerprint(proxy)
                 else:
@@ -518,13 +527,15 @@ class ProxyManager:
                 return err, res
         if not self.internet_blocked_until + uts < 0:
             if not get_check_connect():
-                print("[!] Потеряно соединение с интернетом.")
+                if print_err:
+                    print("[!] Потеряно соединение с интернетом.")
                 self.internet_blocked_until = uts + self.no_internet_timeout
                 err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
                 res = _dv
                 return err, res
             else:
-                print("[!] Всё ок с интернетом.")
+                if print_err:
+                    print("[!] Всё ок с интернетом.")
                 self.internet_blocked_until = -(uts + self.no_internet_timeout * 2)
         return err, res
 
