@@ -105,10 +105,14 @@ def get_content(
                 proxies=_get_proxy(proxies=proxies),
             )
         else:
+            cookies = kwargs.get('cookies')
+            if not cookies:
+                cookies = None
             res = requests.get(
                 url, params=params, headers=headers,
                 timeout=timeout, verify=verify,
                 proxies=_get_proxy(proxies=proxies),
+                cookies=cookies,
             )
         res.encoding = 'utf-8'
         if type_content:
@@ -150,7 +154,7 @@ def post_content(
     if not params:
         params = dict()
     try:
-        _kwargs = {params_key: params}
+        _kwargs = {params_key: params}  # 'json', 'data'
         if connect:
             res = connect.post(
                 url, headers=headers, timeout=timeout,
@@ -454,7 +458,7 @@ class ProxyManager:
         res = _dv
         uts = int(time.time())
         print_err = kwargs.pop('print_err', None)
-        post_params_key = kwargs.pop('post_params_key', 'json')
+        post_params_key = kwargs.pop('post_params_key', 'json')  # 'json', 'data'
         if self.internet_blocked_until > uts:
             err = f'$1$ ProxyManager.request: internet_blocked_until={self.internet_blocked_until - uts}'
             res = _dv
