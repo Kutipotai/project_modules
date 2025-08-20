@@ -190,13 +190,13 @@ def convert_timer_universal(*, sec_time=None, text_time=None, min_value=None, se
 def validation_json_value(
         value: str | dict | list,
         value_type='str',
-        default_value=None,
         indent=None,
         ensure_ascii=None,
+        _dv=None,
         print_err=True,
 ):
     if not value:
-        return default_value
+        return _dv
     try:
         match value_type:
             case 'str':
@@ -209,38 +209,38 @@ def validation_json_value(
                 # else:
                 #     value = json.dumps(value).decode('utf-8')
             case _:
-                value = default_value
+                value = _dv
     except Exception as e:
-        value = default_value
+        value = _dv
         if print_err:
             print('validation_json_value:', e)
     return value
 
 
-def validation_float_value(value, default_value=0.0, print_err=True):
+def validation_float_value(value, _dv=0.0, print_err=True):
     if value == '' or value is None:
-        value = default_value
+        value = _dv
         return value
     try:
         value = float(value)
     except Exception as e:
-        value = default_value
+        value = _dv
         if print_err:
             print('validation_float_value:', e)
     return value
 
 
-def validation_int_value(value, default_value=0, dirty=True, print_err=True):
+def validation_int_value(value, _dv=0, dirty=True, print_err=True):
     if value == '' or value is None:
-        value = default_value
+        value = _dv
         return value
     try:
         if dirty:
-            value = int(''.join([x for x in value if x in '1234567890']))
+            value = int(''.join([x for x in str(value) if x in '1234567890']))
         else:
             value = int(value)
     except Exception as e:
-        value = default_value
+        value = _dv
         if print_err:
             print('validation_int_value:', e)
     return value
