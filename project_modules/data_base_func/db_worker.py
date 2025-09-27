@@ -4,15 +4,15 @@ from psycopg2.extras import DictCursor, DictRow
 
 
 def close_db(*, print_err=True, **kwargs):
-    if conn := kwargs.get('conn'):
-        try:
-            conn.close()
-        except Exception as e:
-            if print_err:
-                print(f'close_db:', e)
     if cur := kwargs.get('cur'):
         try:
             cur.close()
+        except Exception as e:
+            if print_err:
+                print(f'close_db:', e)
+    if conn := kwargs.get('conn'):
+        try:
+            conn.close()
         except Exception as e:
             if print_err:
                 print(f'close_db:', e)
