@@ -223,6 +223,7 @@ def get_google_sheets_data(
     if not skip_line:
         skip_line = list()
     try:
+        url = f'{protocol}://docs.google.com/spreadsheet/ccc?key={api_key}&output=csv&gid={gid}'
         match method:
             case 1:
                 url = f'{protocol}://docs.google.com/spreadsheet/ccc?key={api_key}&output=csv&gid={gid}'
@@ -237,8 +238,7 @@ def get_google_sheets_data(
             case 4:
                 # не забирает скрытые диапазоны
                 url = f'{protocol}://docs.google.com/spreadsheets/d/{api_key}/gviz/tq?tqx=out:csv&sheet={sheet_name}'  # csv / json
-            case _:
-                url = f'{protocol}://docs.google.com/spreadsheet/ccc?key={api_key}&output=csv&gid={gid}'
+
         req = requests.get(url=url, verify=verify, )
         raw_data = req.content.decode('utf-8')
         if method in [3, 4, ]:
@@ -273,25 +273,29 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
     headers = {
         "Content-Type": "application/json"
     }
+    timeout = kwargs.get('timeout', (15, 15))
+    timeout = tuple(timeout) if timeout else None
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
-        timeout=(5, 5), verify=True,
+        timeout=timeout, verify=True,
     )
     return err, res
 
 
-def send_message_discord(*, msg, chat_id, token):
+def send_message_discord(*, msg, chat_id, token, **kwargs):
     url = f'https://discord.com/api/v9/channels/{chat_id}/messages'
     params = {'content': f'{msg}'}
     headers = {
         "Authorization": f"Bot {token}",
         "Content-Type": "application/json"
     }
+    timeout = kwargs.get('timeout', (15, 15))
+    timeout = tuple(timeout) if timeout else None
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
-        timeout=(5, 5), verify=True,
+        timeout=timeout, verify=True,
     )
     return err, res
 
@@ -484,6 +488,7 @@ class ProxyManager:
             session = proxy_data['session']
             proxy_data['timeout_until'] = uts + self.request_timeout
             try:
+                response = None
                 match method:
                     case 'post':
                         if 'params' in kwargs:
@@ -491,7 +496,7 @@ class ProxyManager:
                         response = session.post(url, **kwargs)
                     case _:
                         response = session.get(url, **kwargs)
-                if not (response.status_code in [200]):
+                if response is None or not (response.status_code in [200]):
                     response = None
             except Exception:
                 response = None
