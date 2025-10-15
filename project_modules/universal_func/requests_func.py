@@ -275,10 +275,12 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
     }
     timeout = kwargs.get('timeout', (15, 15))
     timeout = tuple(timeout) if timeout else None
+    proxies = kwargs.get('proxies')
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
         timeout=timeout, verify=True,
+        proxies=_get_proxy(proxies=proxies),
     )
     return err, res
 
@@ -292,10 +294,12 @@ def send_message_discord(*, msg, chat_id, token, **kwargs):
     }
     timeout = kwargs.get('timeout', (15, 15))
     timeout = tuple(timeout) if timeout else None
+    proxies = kwargs.get('proxies')
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
         timeout=timeout, verify=True,
+        proxies=_get_proxy(proxies=proxies),
     )
     return err, res
 
