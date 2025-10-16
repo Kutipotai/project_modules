@@ -274,32 +274,30 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
         "Content-Type": "application/json"
     }
     timeout = kwargs.get('timeout', (15, 15))
-    timeout = tuple(timeout) if timeout else None
-    proxies = kwargs.get('proxies')
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
-        timeout=timeout, verify=True,
-        proxies=_get_proxy(proxies=proxies),
+        timeout=tuple(timeout) if timeout else None,
+        verify=kwargs.get('verify', True),
+        proxies=kwargs.get('proxies'),
     )
     return err, res
 
 
 def send_message_discord(*, msg, chat_id, token, **kwargs):
-    url = f'https://discord.com/api/v9/channels/{chat_id}/messages'
+    url = f'https://discord.com/api/v10/channels/{chat_id}/messages'
     params = {'content': f'{msg}'}
     headers = {
         "Authorization": f"Bot {token}",
         "Content-Type": "application/json"
     }
     timeout = kwargs.get('timeout', (15, 15))
-    timeout = tuple(timeout) if timeout else None
-    proxies = kwargs.get('proxies')
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
-        timeout=timeout, verify=True,
-        proxies=_get_proxy(proxies=proxies),
+        timeout=tuple(timeout) if timeout else None,
+        verify=kwargs.get('verify', True),
+        proxies=kwargs.get('proxies'),
     )
     return err, res
 
