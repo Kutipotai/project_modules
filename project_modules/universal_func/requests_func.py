@@ -155,6 +155,8 @@ def post_content(
         params = dict()
     try:
         _kwargs = {params_key: params}  # 'json', 'data'
+        if 'files' in kwargs:
+            _kwargs['files'] = _kwargs['files']
         if connect:
             res = connect.post(
                 url, headers=headers, timeout=timeout,
@@ -275,13 +277,47 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
     }
     timeout = kwargs.get('timeout', (15, 15))
     err, res = post_content(
-        url=url, type_content='text',
-        params=params, headers=headers,
+        url=url,
+        type_content='text',
+        params=params,
+        headers=headers,
         timeout=tuple(timeout) if timeout else None,
         verify=kwargs.get('verify', True),
         proxies=kwargs.get('proxies'),
     )
     return err, res
+
+
+
+def send_photo_from_bytes(chat_id, photo_bytes, token, msg=None, caption=None, **kwargs):
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
+    files = {'photo': ('photo.jpg', photo_bytes)}
+    params = {
+        'chat_id': chat_id,
+        'disable_notification': kwargs.get('disable_notification', False),
+        'parse_mode': kwargs.get('parse_mode', 'html'),
+    }
+    if caption:
+        params['caption'] = caption
+    if msg:
+        params['text'] = msg
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+    timeout = kwargs.get('timeout', (15, 15))
+    err, res = post_content(
+        url=url,
+        type_content='text',
+        files=files,
+        params=params,
+        headers=headers,
+        timeout=tuple(timeout) if timeout else None,
+        verify=kwargs.get('verify', True),
+        proxies=kwargs.get('proxies'),
+    )
+    return err, res
+
 
 
 def send_message_discord(*, msg, chat_id, token, **kwargs):
