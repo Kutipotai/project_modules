@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="project-modules",  # это имя будет использоваться в импортах
-    version="0.1.6",
+    version="0.1.7",
     packages=find_packages(include=["project_modules", "project_modules.*"]),
     install_requires=[
         "requests",
@@ -13,6 +13,7 @@ setup(
         "selenium",
         "tabulate",
         "fake_useragent",
+        "gspread",
     ],
     description="Общие модули и утилиты",
     author="Kutipotai",

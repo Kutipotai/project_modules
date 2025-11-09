@@ -288,7 +288,6 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
     return err, res
 
 
-
 def send_photo_from_bytes(chat_id, photo_bytes, token, msg=None, caption=None, **kwargs):
     url = f"https://api.telegram.org/bot{token}/sendPhoto"
     files = {'photo': ('photo.jpg', photo_bytes)}
@@ -317,7 +316,6 @@ def send_photo_from_bytes(chat_id, photo_bytes, token, msg=None, caption=None, *
         proxies=kwargs.get('proxies'),
     )
     return err, res
-
 
 
 def send_message_discord(*, msg, chat_id, token, **kwargs):

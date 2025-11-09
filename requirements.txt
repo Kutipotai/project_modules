@@ -8,3 +8,4 @@ lxml
 selenium
 tabulate
 fake_useragent
+gspread
