@@ -33,7 +33,8 @@ def get_gs_data(
         _range='A1',
         cols_name=None,
 ):
-    errors = list()
+    err = None
+    df = list()
     try:
         client = service_account(filename=client_filename)
         table = get_table_by_id(client, table_id)
@@ -48,6 +49,5 @@ def get_gs_data(
             df.append({k: (d[i] if len(d) > i else None) for k, i in cols_name.items()})
             # df.append({k: v for k, v in zip_longest(cols_name, d, fillvalue=None)})
     except Exception as e:
-        msg = f'set_predict_data_ls: {e}'
-        errors.append(msg)
-    return errors
+        err = f'get_gs_data: {e}'
+    return err, df
