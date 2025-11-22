@@ -130,7 +130,7 @@ def normal_calendar_list(*, offset=1, now_day=1, _format='%Y-%m-%d', _sec_offset
     date_list = list()
     for d in range(offset, - (now_day + 1), -1):  # for d in range(-offset, - (now_day + 1), -1):
         _date = time.strftime(f'{_format} %H:%M:%S', time.localtime(time.time() - d * 86400 + _sec_offset))
-        date_list.append(_date[:10])
+        date_list.append(_date[:-9])
     return date_list
 
 
@@ -142,7 +142,7 @@ def normal_calendar_list_v2(*, dn=0, up=0, is_straight=True, _format='%Y-%m-%d',
     is_straight_value = 1 if is_straight else -1
     for d in list(range(dn, (up + 1)))[::is_straight_value]:  # for d in range(-up, - (-dn + 1), -1):
         _date = time.strftime(f'{_format} %H:%M:%S', time.localtime(time.time() + d * 86400 + _sec_offset))
-        date_list.append(_date[:10])
+        date_list.append(_date[:-9])
     return date_list
 
 

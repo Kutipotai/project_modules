@@ -32,20 +32,23 @@ def get_gs_data(
         sheet_name,
         _range='A1',
         cols_name=None,
+        skip_line=None,
 ):
     err = None
     df = list()
+    if skip_line is None:
+        skip_line = list()
     try:
         client = service_account(filename=client_filename)
         table = get_table_by_id(client, table_id)
         sheet = table.worksheet(sheet_name)
-
         data_gs = sheet.get(_range)
         if cols_name is None:
             cols_name = {k: i for i, k in enumerate(data_gs[0])}
             data_gs = data_gs[1:]
-        df = list()
-        for d in data_gs:
+        for n, d in enumerate(data_gs):
+            if n in skip_line:
+                continue
             df.append({k: (d[i] if len(d) > i else None) for k, i in cols_name.items()})
             # df.append({k: v for k, v in zip_longest(cols_name, d, fillvalue=None)})
     except Exception as e:

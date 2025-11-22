@@ -210,7 +210,7 @@ def get_google_sheets_data(
         *,
         api_key,
         sheet_name,
-        gid,
+        gid=None,
         protocol,
         verify,
         method=None,
