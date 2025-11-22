@@ -54,3 +54,47 @@ def get_gs_data(
     except Exception as e:
         err = f'get_gs_data: {e}'
     return err, df
+
+
+def set_gs_data(
+        *,
+        data,
+        client_filename,
+        table_id,
+        sheet_name,
+        _range='A1',
+        is_colum_name=True,
+        need_keys=None,
+        is_clear=False,
+        is_clean_range=False,
+):
+    errors = list()
+    try:
+        if not data:
+            return errors
+        client = service_account(filename=client_filename)
+        table = get_table_by_id(client, table_id)
+        match_keys = [k for k in data[0]]
+        if need_keys:
+            match_keys = need_keys
+
+        mdf = list()
+        for d in data:
+            mdf.append([d.get(k) for k in match_keys])
+
+        if is_colum_name:
+            res_df = [match_keys] + mdf
+        else:
+            res_df = mdf
+
+        sheet = table.worksheet(sheet_name)
+        if is_clear:
+            sheet.clear()
+        if is_clean_range:
+            sheet.batch_clear([_range])
+        sheet.update(res_df, _range)
+    except Exception as e:
+        msg = f'set_gs_data: {e}'
+        errors.append(msg)
+    return errors
+
