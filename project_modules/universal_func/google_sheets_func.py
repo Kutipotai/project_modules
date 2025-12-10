@@ -3,6 +3,7 @@ from gspread import (
     Spreadsheet,
     Worksheet,
     service_account,
+    service_account_from_dict,
 )
 
 def get_table_by_url(client: Client, table_url):
@@ -27,7 +28,8 @@ def get_worksheet_info(table: Spreadsheet) -> dict:
 
 def get_gs_data(
         *,
-        client_filename,
+        client_filename=None,
+        client_dict=None,
         table_id,
         sheet_name,
         _range='A1',
@@ -39,7 +41,14 @@ def get_gs_data(
     if skip_line is None:
         skip_line = list()
     try:
-        client = service_account(filename=client_filename)
+        client = None
+        if client_filename:
+            client = service_account(filename=client_filename)
+        if client_dict:
+            client = service_account_from_dict(client_dict)
+        if client is None:
+            err = f'get_gs_data: client is None'
+            return err, df
         table = get_table_by_id(client, table_id)
         sheet = table.worksheet(sheet_name)
         data_gs = sheet.get(_range)
@@ -59,7 +68,8 @@ def get_gs_data(
 def set_gs_data(
         *,
         data,
-        client_filename,
+        client_filename=None,
+        client_dict=None,
         table_id,
         sheet_name,
         _range='A1',
@@ -72,7 +82,14 @@ def set_gs_data(
     try:
         if not data:
             return errors
-        client = service_account(filename=client_filename)
+        client = None
+        if client_filename:
+            client = service_account(filename=client_filename)
+        if client_dict:
+            client = service_account_from_dict(client_dict)
+        if client is None:
+            err = f'get_gs_data: client is None'
+            return err, df
         table = get_table_by_id(client, table_id)
         match_keys = [k for k in data[0]]
         if need_keys:

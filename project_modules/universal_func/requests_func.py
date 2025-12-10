@@ -336,6 +336,19 @@ def send_message_discord(*, msg, chat_id, token, **kwargs):
     return err, res
 
 
+def get_user_agent(list_ua, not_mobile=True):
+    _mobile = list()
+    if not_mobile:
+        _mobile = ['Mobile', 'Android', 'iPhone']
+    ua = UserAgent()
+    for _ in range(1_000):
+        user_agent = ua.chrome
+        if not [x for x in _mobile if x in user_agent] and not (user_agent in list_ua):
+            list_ua.append(user_agent)
+            return user_agent
+    return None
+
+
 def response_to_data(response, type_content, _dv=None):
     err = None
     try:
