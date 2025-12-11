@@ -26,6 +26,33 @@ def get_worksheet_info(table: Spreadsheet) -> dict:
     return worksheet_info
 
 
+def get_gs_tables(
+        *,
+        client_filename=None,
+        client_dict=None,
+        table_id,
+        _range='A1',
+        **kwargs,
+):
+    err = None
+    res = list()
+    try:
+        client = None
+        if client_filename:
+            client = service_account(filename=client_filename)
+        if client_dict:
+            client = service_account_from_dict(client_dict)
+        if client is None:
+            err = f'get_gs_tables: client is None'
+            return err, res
+        table = get_table_by_id(client, table_id)
+        worksheet_info = get_worksheet_info(table=table)
+        res = worksheet_info['names']
+    except Exception as e:
+        err = f'get_gs_data: {e}'
+    return err, res
+
+
 def get_gs_data(
         *,
         client_filename=None,
@@ -88,8 +115,9 @@ def set_gs_data(
         if client_dict:
             client = service_account_from_dict(client_dict)
         if client is None:
-            err = f'get_gs_data: client is None'
-            return err, df
+            msg = f'set_gs_data: client is None'
+            errors.append(msg)
+            return errors
         table = get_table_by_id(client, table_id)
         match_keys = [k for k in data[0]]
         if need_keys:
