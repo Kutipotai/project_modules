@@ -271,6 +271,7 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
         'text': f'{msg}',
         'disable_notification': kwargs.get('disable_notification', False),
         'parse_mode': kwargs.get('parse_mode', 'html'),
+        'disable_web_page_preview': kwargs.get('disable_web_page_preview', True),  # ???
     }
     headers = {
         "Content-Type": "application/json"
