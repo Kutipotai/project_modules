@@ -62,6 +62,7 @@ def get_gs_data(
         _range='A1',
         cols_name=None,
         skip_line=None,
+        **kwargs,
 ):
     err = None
     df = list()
@@ -104,6 +105,7 @@ def set_gs_data(
         need_keys=None,
         is_clear=False,
         is_clean_range=False,
+        **kwargs,
 ):
     errors = list()
     try:
