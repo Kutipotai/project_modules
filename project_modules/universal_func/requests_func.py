@@ -273,6 +273,8 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
         'parse_mode': kwargs.get('parse_mode', 'html'),
         'disable_web_page_preview': kwargs.get('disable_web_page_preview', True),  # ???
     }
+    if message_thread_id := kwargs.get('message_thread_id'):
+        params['message_thread_id'] = message_thread_id
     headers = {
         "Content-Type": "application/json"
     }

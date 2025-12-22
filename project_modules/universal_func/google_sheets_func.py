@@ -45,6 +45,10 @@ def get_gs_tables(
         if client is None:
             err = f'get_gs_tables: client is None'
             return err, res
+
+        _timeout = kwargs.get('timeout')
+        client.set_timeout(tuple(_timeout) if _timeout else (10, 30))
+
         table = get_table_by_id(client, table_id)
         worksheet_info = get_worksheet_info(table=table)
         res = worksheet_info['names']
@@ -77,6 +81,10 @@ def get_gs_data(
         if client is None:
             err = f'get_gs_data: client is None'
             return err, df
+
+        _timeout = kwargs.get('timeout')
+        client.set_timeout(tuple(_timeout) if _timeout else (10, 30))
+
         table = get_table_by_id(client, table_id)
         sheet = table.worksheet(sheet_name)
         data_gs = sheet.get(_range)
@@ -120,6 +128,10 @@ def set_gs_data(
             msg = f'set_gs_data: client is None'
             errors.append(msg)
             return errors
+
+        _timeout = kwargs.get('timeout')
+        client.set_timeout(tuple(_timeout) if _timeout else (10, 30))
+
         table = get_table_by_id(client, table_id)
         match_keys = [k for k in data[0]]
         if need_keys:
