@@ -10,6 +10,16 @@ def get_hash_id(keys: list = None):
     token = '_'.join([str(k) for k in keys])
     return hashlib.sha1(token.encode()).hexdigest()
 
+def get_hash_id_v2(value: list = None, **kwargs):
+    if not value:
+        return None
+    token = safe_join(value=value, **kwargs)
+    return hashlib.sha1(token.encode()).hexdigest()
+
+def safe_join(value: list = None, sep='|', is_lower=True):
+    if not value:
+        return None
+    return sep.join([str(get_clt(value=k) if is_lower else k) for k in value])
 
 def write_file_text(*, file_name, data, typ='w', enc='utf-8', **kwargs):
     with open(f'{file_name}', typ, encoding=enc) as f:
