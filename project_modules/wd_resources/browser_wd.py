@@ -286,7 +286,7 @@ class BrowserWD:
             return True, 'Не удалось создать подключение к веб-драйверу!'
         return False, 'Ok'
 
-    def go_path(self, path):
+    def go_path(self, path, refresh=False):
         err, msg, res = False, 'Ok', None
         if self.driver_obj is None:
             return True, 'driver_obj = None', None
@@ -296,6 +296,8 @@ class BrowserWD:
             res = self.driver_obj.get(f'{path}')
             # self.driver_obj.execute_script("document.body.style.zoom='75%'")
             # self.driver_obj.set_window_size(1400, 1000)
+            if refresh:
+                self.driver_obj.refresh()
         except InvalidArgumentException as e:
             print('go_path():', e)
             err, msg, res = True, 'Не удалось перейти по ссылке!', None
