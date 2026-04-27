@@ -100,22 +100,17 @@ def get_content(
     if not params:
         params = dict()
     try:
-        if connect:
-            res = connect.get(
-                url, params=params, headers=headers,
-                timeout=timeout, verify=verify,
-                proxies=_get_proxy(proxies=proxies),
-            )
-        else:
-            cookies = kwargs.get('cookies')
-            if not cookies:
-                cookies = None
-            res = requests.get(
-                url, params=params, headers=headers,
-                timeout=timeout, verify=verify,
-                proxies=_get_proxy(proxies=proxies),
-                cookies=cookies,
-            )
+        request_func = connect.post if connect else requests.post
+        request_kwargs = dict()
+        if 'cookies' in kwargs:
+            request_kwargs['cookies'] = kwargs['cookies']
+
+        res = request_func.get(
+            url, params=params, headers=headers,
+            timeout=timeout, verify=verify,
+            proxies=_get_proxy(proxies=proxies),
+            **request_kwargs
+        )
         res.encoding = 'utf-8'
         if type_content:
             match type_content:
@@ -158,23 +153,25 @@ def post_content(
     if not params:
         params = dict()
     try:
-        _kwargs = {params_key: params}  # 'json', 'data'
+        request_func = connect.post if connect else requests.post
+        request_kwargs = dict()
+        if params_key == 'json':
+            request_kwargs['json'] = params
+            headers.setdefault('Content-Type', 'application/json')
+        if params_key == 'data':
+            request_kwargs['data'] = params
+            headers.setdefault('Content-Type', 'application/x-www-form-urlencoded')
+
         if 'files' in kwargs:
-            _kwargs['files'] = _kwargs['files']
-        if connect:
-            res = connect.post(
-                url, headers=headers, timeout=timeout,
-                verify=verify, allow_redirects=allow_redirects,
-                proxies=_get_proxy(proxies=proxies),
-                **_kwargs,
-            )
-        else:
-            res = requests.post(
-                url, headers=headers, timeout=timeout,
-                verify=verify, allow_redirects=allow_redirects,
-                proxies=_get_proxy(proxies=proxies),
-                **_kwargs,
-            )
+            request_kwargs['files'] = kwargs['files']
+        if 'cookies' in kwargs:
+            request_kwargs['cookies'] = kwargs['cookies']
+        res = request_func.post(
+            url, headers=headers, timeout=timeout,
+            verify=verify, allow_redirects=allow_redirects,
+            proxies=_get_proxy(proxies=proxies),
+            **request_kwargs,
+        )
         res.encoding = 'utf-8'
         if type_content:
             match type_content:
@@ -189,6 +186,221 @@ def post_content(
             print('post_content:', e)
         return f"Error! --> {url}", _dv
     return err, res
+
+
+def get_content_v2(
+        *,
+        url,
+        connect=None,
+        type_content=None,
+        params=None,
+        headers=None,
+        proxies=None,
+        timeout:None|tuple[float|int, float|int]=None,
+        verify=True,
+        _dv=None,
+        print_err=True,
+
+        # 🔥 stream-настройки
+        stream_mode=False,
+        max_time=30,
+        max_size=5 * 1024 * 1024,
+        chunk_size=8192,
+
+        **kwargs
+):
+    err, res = None, _dv
+
+    timeout = tuple(timeout) if timeout else (15, 15)
+    headers = headers or {}
+    params = params or {}
+
+    start_time = time.time()
+
+    try:
+        request_func = connect.get if connect else requests.get
+        request_kwargs = dict()
+        if 'cookies' in kwargs:
+            request_kwargs['cookies'] = kwargs['cookies']
+        response = request_func(
+            url,
+            params=params,
+            headers=headers,
+            timeout=timeout,
+            verify=verify,
+            proxies=_get_proxy(proxies=proxies),
+            stream=stream_mode,
+            **request_kwargs
+        )
+
+        # fallback encoding
+        if not response.encoding:
+            response.encoding = 'utf-8'
+
+        # 🔹 ОБЫЧНЫЙ режим (без stream)
+        if not stream_mode:
+            if type_content == 'text':
+                return err, response.text
+            if type_content == 'json':
+                return err, response.json()
+            return err, response
+
+        # 🔹 STREAM режим
+        content = []
+        total_size = 0
+
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            # ⏱️ общий таймаут
+            if time.time() - start_time > max_time:
+                raise TimeoutError(f"Total timeout exceeded ({max_time}s)")
+
+            if not chunk:
+                continue
+
+            total_size += len(chunk)
+
+            # 📦 лимит размера
+            if total_size > max_size:
+                raise ValueError(f"Response too large (> {max_size} bytes)")
+
+            content.append(chunk)
+
+        raw = b''.join(content)
+
+        # 🔥 важно: закрываем соединение
+        response.close()
+
+        # 🔥 "восстанавливаем" response
+        response._content = raw
+        response._content_consumed = True
+
+        # 🔹 единая логика возврата
+        if type_content == 'text':
+            return err, response.text
+
+        if type_content == 'json':
+            return err, response.json()
+
+        return err, response
+
+    except Exception as e:
+        if print_err:
+            print('get_content:', repr(e))
+        return f"Error! --> {url}", _dv
+
+
+def post_content_v2(
+        *,
+        url,
+        connect=None,
+        type_content=None,
+        params=None,
+        headers=None,
+        proxies=None,
+        timeout: None | tuple[float | int, float | int] = None,
+        verify=True,
+        allow_redirects=None,
+        params_key='json',
+        _dv=None,
+        print_err=True,
+
+        # 🔥 stream-настройки
+        stream_mode=False,
+        max_time=30,
+        max_size=5 * 1024 * 1024,
+        chunk_size=8192,
+
+        **kwargs
+):
+    err, res = None, _dv
+
+    timeout = tuple(timeout) if timeout else (15, 15)
+    headers = headers or {}
+    params = params or {}
+
+    start_time = time.time()
+
+    try:
+        request_func = connect.post if connect else requests.post
+        request_kwargs = dict()
+        if params_key == 'json':
+            request_kwargs['json'] = params
+            headers.setdefault('Content-Type', 'application/json')
+        if params_key == 'data':
+            request_kwargs['data'] = params
+            headers.setdefault('Content-Type', 'application/x-www-form-urlencoded')
+            
+        if 'files' in kwargs:
+            request_kwargs['files'] = kwargs['files']
+        if 'cookies' in kwargs:
+            request_kwargs['cookies'] = kwargs['cookies']
+
+        response = request_func(
+            url,
+            headers=headers,
+            timeout=timeout,
+            verify=verify,
+            allow_redirects=allow_redirects,
+            proxies=_get_proxy(proxies=proxies),
+            stream=stream_mode,
+            **request_kwargs,
+        )
+
+        if not response.encoding:
+            response.encoding = 'utf-8'
+
+        # 🔹 ОБЫЧНЫЙ режим
+        if not stream_mode:
+            if type_content == 'text':
+                return err, response.text
+
+            if type_content == 'json':
+                return err, response.json()
+
+            return err, response
+
+        # 🔹 STREAM режим
+        content = []
+        total_size = 0
+
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            # ⏱️ общий таймаут
+            if time.time() - start_time > max_time:
+                raise TimeoutError(f"Total timeout exceeded ({max_time}s)")
+
+            if not chunk:
+                continue
+
+            total_size += len(chunk)
+
+            # 📦 лимит размера
+            if total_size > max_size:
+                raise ValueError(f"Response too large (> {max_size} bytes)")
+
+            content.append(chunk)
+
+        raw = b''.join(content)
+
+        # 🔥 закрываем соединение
+        response.close()
+
+        # 🔥 восстанавливаем response
+        response._content = raw
+        response._content_consumed = True
+
+        # 🔹 единая логика
+        if type_content == 'text':
+            return err, response.text
+
+        if type_content == 'json':
+            return err, response.json()
+
+        return err, response
+
+    except Exception as e:
+        if print_err:
+            print('post_content:', repr(e))
+        return f"Error! --> {url}", _dv
 
 
 def init_connect_requests(*, proxies=None, headers=None):
