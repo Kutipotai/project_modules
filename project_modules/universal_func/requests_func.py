@@ -204,19 +204,16 @@ def get_content_v2(
         # 🔥 stream-настройки
         stream_mode=False,
         max_time=30,
-        max_size=5 * 1024 * 1024,
+        max_size=0,  # 5 * 1024 * 1024
         chunk_size=8192,
 
         **kwargs
 ):
     err, res = None, _dv
-
+    start_time = time.time()
     timeout = tuple(timeout) if timeout else (15, 15)
     headers = headers or {}
     params = params or {}
-
-    start_time = time.time()
-
     try:
         request_func = connect.get if connect else requests.get
         request_kwargs = dict()
@@ -307,19 +304,16 @@ def post_content_v2(
         # 🔥 stream-настройки
         stream_mode=False,
         max_time=30,
-        max_size=5 * 1024 * 1024,
+        max_size=0,  # 5 * 1024 * 1024
         chunk_size=8192,
 
         **kwargs
 ):
     err, res = None, _dv
-
+    start_time = time.time()
     timeout = tuple(timeout) if timeout else (15, 15)
     headers = headers or {}
     params = params or {}
-
-    start_time = time.time()
-
     try:
         request_func = connect.post if connect else requests.post
         request_kwargs = dict()
