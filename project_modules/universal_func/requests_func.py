@@ -100,12 +100,12 @@ def get_content(
     if not params:
         params = dict()
     try:
-        request_func = connect.post if connect else requests.post
+        request_func = connect.get if connect else requests.get
         request_kwargs = dict()
         if 'cookies' in kwargs:
             request_kwargs['cookies'] = kwargs['cookies']
 
-        res = request_func.get(
+        res = request_func(
             url, params=params, headers=headers,
             timeout=timeout, verify=verify,
             proxies=_get_proxy(proxies=proxies),
@@ -166,7 +166,7 @@ def post_content(
             request_kwargs['files'] = kwargs['files']
         if 'cookies' in kwargs:
             request_kwargs['cookies'] = kwargs['cookies']
-        res = request_func.post(
+        res = request_func(
             url, headers=headers, timeout=timeout,
             verify=verify, allow_redirects=allow_redirects,
             proxies=_get_proxy(proxies=proxies),
@@ -329,7 +329,7 @@ def post_content_v2(
         if params_key == 'data':
             request_kwargs['data'] = params
             headers.setdefault('Content-Type', 'application/x-www-form-urlencoded')
-            
+
         if 'files' in kwargs:
             request_kwargs['files'] = kwargs['files']
         if 'cookies' in kwargs:
