@@ -210,7 +210,7 @@ def get_content_v2(
         **kwargs
 ):
     err, res = None, _dv
-    start_time = time.time()
+    # start_time = time.time()
     timeout = tuple(timeout) if timeout else (15, 15)
     headers = headers or {}
     params = params or {}
@@ -245,7 +245,7 @@ def get_content_v2(
         # 🔹 STREAM режим
         content = []
         total_size = 0
-
+        start_time = time.time()
         for chunk in response.iter_content(chunk_size=chunk_size):
             # ⏱️ общий таймаут
             if time.time() - start_time > max_time:
@@ -310,7 +310,7 @@ def post_content_v2(
         **kwargs
 ):
     err, res = None, _dv
-    start_time = time.time()
+    # start_time = time.time()
     timeout = tuple(timeout) if timeout else (15, 15)
     headers = headers or {}
     params = params or {}
@@ -356,7 +356,7 @@ def post_content_v2(
         # 🔹 STREAM режим
         content = []
         total_size = 0
-
+        start_time = time.time()
         for chunk in response.iter_content(chunk_size=chunk_size):
             # ⏱️ общий таймаут
             if time.time() - start_time > max_time:
