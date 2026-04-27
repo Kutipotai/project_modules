@@ -6,13 +6,25 @@ from gspread import (
     service_account_from_dict,
 )
 
-def get_table_by_url(client: Client, table_url):
+def get_table_by_url(client: Client, table_url, **kwargs):
     """Получение таблицы из Google Sheets по ссылке."""
+    _timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    if _timeout:
+        _timeout = tuple(_timeout)
+    else:
+        _timeout = (10, 30)
+    client.set_timeout(_timeout)
     return client.open_by_url(table_url)
 
 
-def get_table_by_id(client: Client, table_url):
+def get_table_by_id(client: Client, table_url, **kwargs):
     """Получение таблицы из Google Sheets по ID таблицы."""
+    _timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    if _timeout:
+        _timeout = tuple(_timeout)
+    else:
+        _timeout = (10, 30)
+    client.set_timeout(_timeout)
     return client.open_by_key(table_url)
 
 
@@ -46,8 +58,12 @@ def get_gs_tables(
             err = f'get_gs_tables: client is None'
             return err, res
 
-        _timeout = kwargs.get('timeout')
-        client.set_timeout(tuple(_timeout) if _timeout else (10, 30))
+        _timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+        if _timeout:
+            _timeout = tuple(_timeout)
+        else:
+            _timeout = (10, 30)
+        client.set_timeout(_timeout)
 
         table = get_table_by_id(client, table_id)
         worksheet_info = get_worksheet_info(table=table)
@@ -82,8 +98,12 @@ def get_gs_data(
             err = f'get_gs_data: client is None'
             return err, df
 
-        _timeout = kwargs.get('timeout')
-        client.set_timeout(tuple(_timeout) if _timeout else (10, 30))
+        _timeout:None|tuple[float|int, float|int] = kwargs.get('timeout')
+        if _timeout:
+            _timeout = tuple(_timeout)
+        else:
+            _timeout = (10, 30)
+        client.set_timeout(_timeout)
 
         table = get_table_by_id(client, table_id)
         sheet = table.worksheet(sheet_name)
@@ -129,8 +149,12 @@ def set_gs_data(
             errors.append(msg)
             return errors
 
-        _timeout = kwargs.get('timeout')
-        client.set_timeout(tuple(_timeout) if _timeout else (10, 30))
+        _timeout:None|tuple[float|int, float|int] = kwargs.get('timeout')
+        if _timeout:
+            _timeout = tuple(_timeout)
+        else:
+            _timeout = (10, 30)
+        client.set_timeout(_timeout)
 
         table = get_table_by_id(client, table_id)
         match_keys = [k for k in data[0]]

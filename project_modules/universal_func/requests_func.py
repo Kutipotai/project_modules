@@ -82,7 +82,7 @@ def get_content(
         params=None,
         headers=None,
         proxies=None,
-        timeout=None,
+        timeout: None | tuple[float | int, float | int] = None,
         verify=True,
         _dv=None,
         print_err=True,
@@ -93,6 +93,8 @@ def get_content(
     err, res = None, _dv
     if timeout:
         timeout = tuple(timeout)
+    else:
+        timeout = (15, 15)
     if not headers:
         headers = dict()
     if not params:
@@ -138,7 +140,7 @@ def post_content(
         params=None,
         headers=None,
         proxies=None,
-        timeout=None,
+        timeout:None|tuple[float|int, float|int]=None,
         verify=True,
         allow_redirects=None,
         params_key='json',
@@ -149,6 +151,8 @@ def post_content(
     err, res = None, _dv
     if timeout:
         timeout = tuple(timeout)
+    else:
+        timeout = (15, 15)
     if not headers:
         headers = dict()
     if not params:
@@ -241,7 +245,17 @@ def get_google_sheets_data(
                 # не забирает скрытые диапазоны
                 url = f'{protocol}://docs.google.com/spreadsheets/d/{api_key}/gviz/tq?tqx=out:csv&sheet={sheet_name}'  # csv / json
 
-        req = requests.get(url=url, verify=verify, )
+
+        timeout = kwargs.get('timeout')
+        if timeout:
+            timeout = timeout
+        else:
+            timeout = (15, 15)
+        req = requests.get(
+            url=url,
+            verify=verify,
+            timeout=timeout,
+        )
         raw_data = req.content.decode('utf-8')
         if method in [3, 4, ]:
             raw_data = raw_data.replace('"', '')
@@ -278,13 +292,17 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
     headers = {
         "Content-Type": "application/json"
     }
-    timeout = kwargs.get('timeout', (15, 15))
+    timeout = kwargs.get('timeout')
+    if timeout:
+        timeout = timeout
+    else:
+        timeout = (15, 15)
     err, res = post_content(
         url=url,
         type_content='text',
         params=params,
         headers=headers,
-        timeout=tuple(timeout) if timeout else None,
+        timeout=timeout,
         verify=kwargs.get('verify', True),
         proxies=kwargs.get('proxies'),
     )
@@ -307,14 +325,18 @@ def send_photo_from_bytes(chat_id, photo_bytes, token, msg=None, caption=None, *
     headers = {
         "Content-Type": "application/json"
     }
-    timeout = kwargs.get('timeout', (15, 15))
+    timeout = kwargs.get('timeout')
+    if timeout:
+        timeout = timeout
+    else:
+        timeout = (15, 15)
     err, res = post_content(
         url=url,
         type_content='text',
         files=files,
         params=params,
         headers=headers,
-        timeout=tuple(timeout) if timeout else None,
+        timeout=timeout,
         verify=kwargs.get('verify', True),
         proxies=kwargs.get('proxies'),
     )
@@ -328,11 +350,15 @@ def send_message_discord(*, msg, chat_id, token, **kwargs):
         "Authorization": f"Bot {token}",
         "Content-Type": "application/json"
     }
-    timeout = kwargs.get('timeout', (15, 15))
+    timeout = kwargs.get('timeout')
+    if timeout:
+        timeout = timeout
+    else:
+        timeout = (15, 15)
     err, res = post_content(
         url=url, type_content='text',
         params=params, headers=headers,
-        timeout=tuple(timeout) if timeout else None,
+        timeout=timeout,
         verify=kwargs.get('verify', True),
         proxies=kwargs.get('proxies'),
     )
@@ -354,6 +380,9 @@ def get_user_agent(list_ua, not_mobile=True):
 
 def response_to_data(response, type_content, _dv=None):
     err = None
+    if response is None:
+        err = f'response_to_data: {type_content} error!'
+        return err, _dv
     try:
         response.encoding = 'utf-8'
         match type_content:
@@ -368,7 +397,7 @@ def response_to_data(response, type_content, _dv=None):
     return err, _dv
 
 
-def get_check_connect(proxies=None, timeout=10):
+def get_check_connect(proxies=None, timeout=(10, 10)):
     try:
         for url in ['https://www.google.com', 'https://api.ipify.org/?format=json', 'https://ipinfo.io/json']:
             r = requests.get(url, proxies=proxies, timeout=timeout)
@@ -403,7 +432,7 @@ class FingerprintGenerator:
         }
 
     def _find_user_agent(self, platform):
-        keywords = self.user_agent_keywords.get(platform)
+        keywords:list = self.user_agent_keywords.get(platform, list())
         try:
             for _ in range(100):  # max attempts
                 ua = self.ua.random
