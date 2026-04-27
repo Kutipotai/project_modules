@@ -260,7 +260,7 @@ def get_content_v2(
             total_size += len(chunk)
 
             # 📦 лимит размера
-            if total_size > max_size:
+            if max_size and total_size > max_size:
                 raise ValueError(f"Response too large (> {max_size} bytes)")
 
             content.append(chunk)
@@ -374,7 +374,7 @@ def post_content_v2(
             total_size += len(chunk)
 
             # 📦 лимит размера
-            if total_size > max_size:
+            if max_size and total_size > max_size:
                 raise ValueError(f"Response too large (> {max_size} bytes)")
 
             content.append(chunk)
