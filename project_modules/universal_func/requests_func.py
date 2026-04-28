@@ -74,7 +74,7 @@ def get_content_urllib(
     return err, res
 
 
-def get_content(
+def get_content_old(
         *,
         url,
         connect=None,
@@ -127,7 +127,7 @@ def get_content(
     return err, res
 
 
-def post_content(
+def post_content_old(
         *,
         url,
         connect=None,
@@ -188,7 +188,7 @@ def post_content(
     return err, res
 
 
-def get_content_v2(
+def get_content(
         *,
         url,
         connect=None,
@@ -286,7 +286,7 @@ def get_content_v2(
         return f"Error! --> {url}", _dv
 
 
-def post_content_v2(
+def post_content(
         *,
         url,
         connect=None,
@@ -562,8 +562,10 @@ def send_message_discord(*, msg, chat_id, token, **kwargs):
     else:
         timeout = (15, 15)
     err, res = post_content(
-        url=url, type_content='text',
-        params=params, headers=headers,
+        url=url,
+        type_content='text',
+        params=params,
+        headers=headers,
         timeout=timeout,
         verify=kwargs.get('verify', True),
         proxies=kwargs.get('proxies'),
