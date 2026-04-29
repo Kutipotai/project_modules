@@ -452,11 +452,8 @@ def get_google_sheets_data(
                 url = f'{protocol}://docs.google.com/spreadsheets/d/{api_key}/gviz/tq?tqx=out:csv&sheet={sheet_name}'  # csv / json
 
 
-        timeout = kwargs.get('timeout')
-        if timeout:
-            timeout = timeout
-        else:
-            timeout = (15, 15)
+        timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+        timeout = tuple(timeout) if timeout else (15, 15)
         req = requests.get(
             url=url,
             verify=verify,
