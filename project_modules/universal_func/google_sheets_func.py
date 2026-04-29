@@ -6,29 +6,39 @@ from gspread import (
     service_account_from_dict,
 )
 
+
+def _get_client(
+        client_filename=None,
+        client_dict=None,
+        timeout: None | tuple[float | int, float | int] = None,
+        **kwargs
+):
+    client = None
+    if client_filename:
+        client = service_account(filename=client_filename)
+    if client_dict:
+        client = service_account_from_dict(client_dict)
+    if client is None:
+        return client
+
+    if timeout:
+        timeout = tuple(timeout)
+    else:
+        timeout = (10, 30)
+    client.set_timeout(timeout)
+    return client
+
 def get_table_by_url(client: Client, table_url, **kwargs):
     """Получение таблицы из Google Sheets по ссылке."""
-    _timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
-    if _timeout:
-        _timeout = tuple(_timeout)
-    else:
-        _timeout = (10, 30)
-    client.set_timeout(_timeout)
     return client.open_by_url(table_url)
 
 
 def get_table_by_id(client: Client, table_url, **kwargs):
     """Получение таблицы из Google Sheets по ID таблицы."""
-    _timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
-    if _timeout:
-        _timeout = tuple(_timeout)
-    else:
-        _timeout = (10, 30)
-    client.set_timeout(_timeout)
     return client.open_by_key(table_url)
 
 
-def get_worksheet_info(table: Spreadsheet) -> dict:
+def get_worksheet_info(table: Spreadsheet, **kwargs) -> dict:
     """Возвращает количество листов в таблице и их названия."""
     worksheets = table.worksheets()
     worksheet_info = {
@@ -40,8 +50,6 @@ def get_worksheet_info(table: Spreadsheet) -> dict:
 
 def get_gs_tables(
         *,
-        client_filename=None,
-        client_dict=None,
         table_id,
         _range='A1',
         **kwargs,
@@ -49,21 +57,10 @@ def get_gs_tables(
     err = None
     res = list()
     try:
-        client = None
-        if client_filename:
-            client = service_account(filename=client_filename)
-        if client_dict:
-            client = service_account_from_dict(client_dict)
+        client = _get_client(**kwargs)
         if client is None:
             err = f'get_gs_tables: client is None'
             return err, res
-
-        _timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
-        if _timeout:
-            _timeout = tuple(_timeout)
-        else:
-            _timeout = (10, 30)
-        client.set_timeout(_timeout)
 
         table = get_table_by_id(client, table_id)
         worksheet_info = get_worksheet_info(table=table)
@@ -75,8 +72,6 @@ def get_gs_tables(
 
 def get_gs_data(
         *,
-        client_filename=None,
-        client_dict=None,
         table_id,
         sheet_name,
         _range='A1',
@@ -89,21 +84,10 @@ def get_gs_data(
     if skip_line is None:
         skip_line = list()
     try:
-        client = None
-        if client_filename:
-            client = service_account(filename=client_filename)
-        if client_dict:
-            client = service_account_from_dict(client_dict)
+        client = _get_client(**kwargs)
         if client is None:
             err = f'get_gs_data: client is None'
             return err, df
-
-        _timeout:None|tuple[float|int, float|int] = kwargs.get('timeout')
-        if _timeout:
-            _timeout = tuple(_timeout)
-        else:
-            _timeout = (10, 30)
-        client.set_timeout(_timeout)
 
         table = get_table_by_id(client, table_id)
         sheet = table.worksheet(sheet_name)
@@ -124,8 +108,6 @@ def get_gs_data(
 def set_gs_data(
         *,
         data,
-        client_filename=None,
-        client_dict=None,
         table_id,
         sheet_name,
         _range='A1',
@@ -139,22 +121,12 @@ def set_gs_data(
     try:
         if not data:
             return errors
-        client = None
-        if client_filename:
-            client = service_account(filename=client_filename)
-        if client_dict:
-            client = service_account_from_dict(client_dict)
+
+        client = _get_client(**kwargs)
         if client is None:
             msg = f'set_gs_data: client is None'
             errors.append(msg)
             return errors
-
-        _timeout:None|tuple[float|int, float|int] = kwargs.get('timeout')
-        if _timeout:
-            _timeout = tuple(_timeout)
-        else:
-            _timeout = (10, 30)
-        client.set_timeout(_timeout)
 
         table = get_table_by_id(client, table_id)
         match_keys = [k for k in data[0]]
