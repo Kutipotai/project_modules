@@ -20,13 +20,18 @@ class BaseThreadPoolManager(ABC):
         self.running = True
         self.last_run_time = 0
         self.last_result = None
+
+        self.print_log = False
+        self.print_error = False
+
         # Регистрируем обработчики сигналов
         self._old_sigint = signal.signal(signal.SIGINT, self._signal_handler)
         self._old_sigterm = signal.signal(signal.SIGTERM, self._signal_handler)
 
     def _signal_handler(self, signum: int, _) -> None:
         """Обработчик сигналов"""
-        print(f"[{self.__class__.__name__}] Received signal {signum}, shutting down...")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Received signal {signum}, shutting down...")
         self.shutdown()
         raise KeyboardInterrupt()
 
@@ -41,7 +46,8 @@ class BaseThreadPoolManager(ABC):
 
         # Завершаем executor
         self.executor.shutdown(wait=False, cancel_futures=True)
-        print(f"[{self.__class__.__name__}] Shutdown complete")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Shutdown complete")
 
     def cleanup(self) -> None:
         """Очистка ресурсов (для ручного вызова)"""
@@ -55,7 +61,8 @@ class BaseThreadPoolManager(ABC):
     def _submit_task(self, fn: Callable, *args, **kwargs) -> Optional[Future]:
         """Универсальная отправка задачи"""
         if not self.running or self.shutdown_flag.is_set():
-            print(f"[{self.__class__.__name__}] Skipping task submission - manager is shutting down")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Skipping task submission - manager is shutting down")
             return None
 
         # Проверяем предыдущий результат
@@ -64,7 +71,8 @@ class BaseThreadPoolManager(ABC):
                 result = self.current_future.result()
                 self._on_task_complete(result)
             except Exception as e:
-                print(f'[{self.__class__.__name__}] Exception in previous task: {e}')
+                if self.print_error:
+                    print(f'[{self.__class__.__name__}] Exception in previous task: {e}')
                 self._on_task_error(e)
 
         # Отправляем новую задачу
@@ -90,11 +98,13 @@ class BaseThreadPoolManager(ABC):
         """Обработка успешного завершения"""
         self.last_result = result
         self.last_run_time = time.time()
-        print(f"[{self.__class__.__name__}] Task completed successfully")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Task completed successfully")
 
     def _on_task_error(self, error: Exception) -> None:
         """Обработка ошибки"""
-        print(f'[{self.__class__.__name__}] Task failed: {error}')
+        if self.print_error:
+            print(f'[{self.__class__.__name__}] Task failed: {error}')
 
     def get_last_result(self):
         """Получить последний результат"""
@@ -118,24 +128,30 @@ class BaseThreadPoolManager(ABC):
             Future объект или None если задача не запущена
         """
         if self.shutdown_flag.is_set():
-            print(f"[{self.__class__.__name__}] Manager is shutting down, skipping run {self.shutdown_flag.is_set()=}")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Manager is shutting down, skipping run {self.shutdown_flag.is_set()=}")
             return None
 
         # Проверяем, не выполняется ли уже задача
         if self.current_future and not self.current_future.done():
-            print(f"[{self.__class__.__name__}] Task is already running, skipping")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Task is already running, skipping")
             return self.current_future
 
         # Получаем параметры и запускаем задачу
         params = self.get_task_params()
         if not params and not kwargs:
+            if self.print_error:
+                print(f"[{self.__class__.__name__}] No task function provided")
             return None
         if kwargs:
             params.update(kwargs)
-            print(f"[{self.__class__.__name__}] Running with params: {params}")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Running with kwargs params")
         fn = params.pop('fn', None)
         if not fn:
-            print(f"[{self.__class__.__name__}] No task function provided")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] No task function provided")
             return None
 
         return self._submit_task(fn, **params)
@@ -147,7 +163,8 @@ class BaseThreadPoolManager(ABC):
         Args:
             interval: Интервал между запусками в секундах
         """
-        print(f"[{self.__class__.__name__}] Starting loop with interval {interval}s")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Starting loop with interval {interval}s")
 
         while self.running and not self.shutdown_flag.is_set():
             try:
@@ -168,7 +185,8 @@ class BaseThreadPoolManager(ABC):
                 time.sleep(interval)
 
             except Exception as e:
-                print(f'[{self.__class__.__name__}] Error in loop: {e}')
+                if self.print_error:
+                    print(f'[{self.__class__.__name__}] Error in loop: {e}')
                 if not self.shutdown_flag.is_set():
                     time.sleep(interval)
 
@@ -184,11 +202,14 @@ class BaseProcessPoolManager(ABC):
 
     def __init__(self, max_workers: int = 1, **kwargs):
         self.executor = ProcessPoolExecutor(max_workers=max_workers)
-        self.shutdown_flag = threading.Event()  # threading.Event проще
+        self.shutdown_flag = threading.Event()
         self.current_future: Optional[Future] = None
         self.running = True
         self.last_run_time = 0
         self.last_result = None
+
+        self.print_log = False
+        self.print_error = False
 
         # Регистрируем обработчики сигналов
         self._old_sigint = signal.signal(signal.SIGINT, self._signal_handler)
@@ -196,7 +217,8 @@ class BaseProcessPoolManager(ABC):
 
     def _signal_handler(self, signum: int, _) -> None:
         """Обработчик сигналов"""
-        print(f"[{self.__class__.__name__}] Received signal {signum}, shutting down...")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Received signal {signum}, shutting down...")
         self.shutdown()
         raise KeyboardInterrupt()  # <- Имитируем Ctrl+C
 
@@ -218,18 +240,21 @@ class BaseProcessPoolManager(ABC):
             parent = psutil.Process()
             for child in parent.children(recursive=True):
                 try:
-                    print(f"[{self.__class__.__name__}] Killing child process {child.pid}")
+                    if self.print_log:
+                        print(f"[{self.__class__.__name__}] Killing child process {child.pid}")
                     child.terminate()
                     child.wait(timeout=1)  # <-- ИСПРАВЛЕНО: wait() вместо join()
                     if child.is_running():
                         child.kill()
                         child.wait(timeout=1)  # <-- ИСПРАВЛЕНО: wait() вместо join()
                 except Exception as e:
-                    print(f"[{self.__class__.__name__}] Error killing process {child.pid}: {e}")
+                    if self.print_error:
+                        print(f"[{self.__class__.__name__}] Error killing process {child.pid}: {e}")
         except Exception as e:
-            print(f"[{self.__class__.__name__}] Error getting children: {e}")
-
-        print(f"[{self.__class__.__name__}] Shutdown complete")
+            if self.print_error:
+                print(f"[{self.__class__.__name__}] Error getting children: {e}")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Shutdown complete")
 
     def cleanup(self) -> None:
         """Очистка ресурсов (для ручного вызова)"""
@@ -243,7 +268,8 @@ class BaseProcessPoolManager(ABC):
     def _submit_task(self, fn: Callable, *args, **kwargs) -> Optional[Future]:
         """Универсальная отправка задачи"""
         if not self.running or self.shutdown_flag.is_set():
-            print(f"[{self.__class__.__name__}] Skipping task submission - manager is shutting down")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Skipping task submission - manager is shutting down")
             return None
 
         # Проверяем предыдущий результат
@@ -252,7 +278,8 @@ class BaseProcessPoolManager(ABC):
                 result = self.current_future.result()
                 self._on_task_complete(result)
             except Exception as e:
-                print(f'[{self.__class__.__name__}] Exception in previous task: {e}')
+                if self.print_error:
+                    print(f'[{self.__class__.__name__}] Exception in previous task: {e}')
                 self._on_task_error(e)
 
         # Отправляем новую задачу
@@ -261,7 +288,8 @@ class BaseProcessPoolManager(ABC):
             self.current_future.add_done_callback(self._on_future_done)
             return self.current_future
         except Exception as e:
-            print(f'[{self.__class__.__name__}] Error submitting task: {e}')
+            if self.print_error:
+                print(f'[{self.__class__.__name__}] Error submitting task: {e}')
             return None
 
     def _on_future_done(self, future: Future) -> None:
@@ -272,19 +300,24 @@ class BaseProcessPoolManager(ABC):
                 self._on_task_complete(result)
             except KeyboardInterrupt:
                 # Игнорируем KeyboardInterrupt при завершении
-                print(f"[{self.__class__.__name__}] Task interrupted by shutdown")
+                if self.print_log:
+                    print(f"[{self.__class__.__name__}] Task interrupted by shutdown")
             except Exception as e:
+                if self.print_error:
+                    print(f"[{self.__class__.__name__}] Exception in previous task: {e}")
                 self._on_task_error(e)
 
     def _on_task_complete(self, result) -> None:
         """Обработка успешного завершения"""
         self.last_result = result
         self.last_run_time = time.time()
-        print(f"[{self.__class__.__name__}] Task completed successfully")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Task completed successfully")
 
     def _on_task_error(self, error: Exception) -> None:
         """Обработка ошибки"""
-        print(f'[{self.__class__.__name__}] Task failed: {error}')
+        if self.print_error:
+            print(f'[{self.__class__.__name__}] Task failed: {error}')
 
     def get_last_result(self):
         return self.last_result
@@ -298,30 +331,37 @@ class BaseProcessPoolManager(ABC):
 
     def one_run(self, **kwargs) -> Optional[Future]:
         if self.shutdown_flag.is_set():
-            print(f"[{self.__class__.__name__}] Manager is shutting down, skipping run")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Manager is shutting down, skipping run")
             return None
 
         if self.current_future and not self.current_future.done():
-            print(f"[{self.__class__.__name__}] Task is already running, skipping")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Task is already running, skipping")
             return self.current_future
 
         params = self.get_task_params()
         if not params and not kwargs:
+            if self.print_error:
+                print(f"[{self.__class__.__name__}] No task function provided")
             return None
 
         if kwargs:
             params.update(kwargs)
-            print(f"[{self.__class__.__name__}] Running with params: {params}")
+            if self.print_log:
+                print(f"[{self.__class__.__name__}] Running with kwargs params")
 
         fn = params.pop('fn', None)
         if not fn:
-            print(f"[{self.__class__.__name__}] No task function provided")
+            if self.print_error:
+                print(f"[{self.__class__.__name__}] No task function provided")
             return None
 
         return self._submit_task(fn, **params)
 
     def loop_run(self, interval: float = 60.0) -> None:
-        print(f"[{self.__class__.__name__}] Starting loop with interval {interval}s")
+        if self.print_log:
+            print(f"[{self.__class__.__name__}] Starting loop with interval {interval}s")
 
         while self.running and not self.shutdown_flag.is_set():
             try:
@@ -337,7 +377,8 @@ class BaseProcessPoolManager(ABC):
                 time.sleep(interval)
 
             except Exception as e:
-                print(f'[{self.__class__.__name__}] Error in loop: {e}')
+                if self.print_error:
+                    print(f'[{self.__class__.__name__}] Error in loop: {e}')
                 if not self.shutdown_flag.is_set():
                     time.sleep(interval)
 
