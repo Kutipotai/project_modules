@@ -1,5 +1,5 @@
 setuptools
-
+psutil
 requests
 requests[socks]
 psycopg2
