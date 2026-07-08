@@ -1,10 +1,10 @@
+import re
 import time
 import requests
 import urllib.parse
 import urllib.request
 import random
 import uuid
-import threading
 from fake_useragent import UserAgent
 
 # import ssl
@@ -611,6 +611,102 @@ def get_check_connect(proxies=None, timeout=(10, 10)):
         return False
     except:
         return False
+
+
+class UserAgentFilter:
+    def __init__(self, max_attempts=1000, default_ua=None):
+        self.ua = UserAgent()
+        self._cache = list()
+        self.max_attempts = max_attempts if max_attempts else 1000
+        self.default_ua =  default_ua if default_ua else self.ua.random
+
+    def get_user_agent(self, device_type='any', exclude_mobile=False, exclude_desktop=False):
+        """
+        Получить User-Agent для нужного типа устройства
+
+        :param device_type: 'mobile', 'desktop', 'tablet', 'any'
+        :param exclude_mobile: исключить мобильные UA
+        :param exclude_desktop: исключить десктопные UA
+        :return: строка с User-Agent или None
+        """
+
+        # Регулярные выражения для определения типа устройства
+        mobile_patterns = [
+            r'Mobile', r'Android', r'iPhone', r'iPod',
+            r'Windows Phone', r'BlackBerry', r'Opera Mini',
+            r'Android.*Mobile', r'iPhone.*Mobile', r'Mobile.*Safari'
+        ]
+
+        tablet_patterns = [
+            r'iPad', r'Tablet', r'Kindle', r'Fire',
+            r'Android(?!.*Mobile)', r'KFAPWI', r'GT-P'
+        ]
+
+        desktop_patterns = [
+            r'Windows NT', r'Macintosh(?!.*Mobile)', r'X11',
+            r'Linux(?!.*Android)', r'CrOS'
+        ]
+
+        # Компилируем регулярки для скорости
+        mobile_re = re.compile('|'.join(mobile_patterns), re.IGNORECASE)
+        tablet_re = re.compile('|'.join(tablet_patterns), re.IGNORECASE)
+        desktop_re = re.compile('|'.join(desktop_patterns), re.IGNORECASE)
+
+        for _ in range(self.max_attempts):
+            user_agent = self.ua.random
+            if user_agent in self._cache:
+                continue
+            # Определяем тип UA
+            is_mobile = bool(mobile_re.search(user_agent))
+            is_tablet = bool(tablet_re.search(user_agent))
+            is_desktop = bool(desktop_re.search(user_agent))
+
+            # Если не удалось определить, пробуем следующий
+            if not any([is_mobile, is_tablet, is_desktop]):
+                continue
+
+            # Логика выбора в зависимости от запрошенного типа
+            if device_type == 'mobile' and is_mobile:
+                self._cache.append(user_agent)
+                return user_agent
+            elif device_type == 'tablet' and is_tablet:
+                self._cache.append(user_agent)
+                return user_agent
+            elif device_type == 'desktop' and is_desktop:
+                self._cache.append(user_agent)
+                return user_agent
+            elif device_type == 'any':
+                if is_mobile and not exclude_mobile:
+                    self._cache.append(user_agent)
+                    return user_agent
+                elif is_tablet and not exclude_mobile:
+                    self._cache.append(user_agent)
+                    return user_agent
+                elif is_desktop and not exclude_desktop:
+                    self._cache.append(user_agent)
+                    return user_agent
+        return self.default_ua
+
+    def get_mobile_ua(self):
+        """Получить мобильный User-Agent"""
+        return self.get_user_agent('mobile')
+
+    def get_desktop_ua(self):
+        """Получить десктопный User-Agent"""
+        return self.get_user_agent('desktop')
+
+    def get_tablet_ua(self):
+        """Получить планшетный User-Agent"""
+        return self.get_user_agent('tablet')
+
+    def get_random_ua(self):
+        """Получить случайный User-Agent"""
+        return self.get_user_agent('any')
+
+    def is_mobile_ua(self, user_agent):
+        """Проверить, является ли UA мобильным"""
+        mobile_patterns = ['Mobile', 'Android', 'iPhone', 'iPod', 'Windows Phone']
+        return any(pattern in user_agent for pattern in mobile_patterns)
 
 
 class FingerprintGenerator:
