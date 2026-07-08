@@ -631,15 +631,18 @@ class FingerprintGenerator:
             "fr-FR": "fr-FR,fr;q=0.9,en;q=0.8",
         }
         self.user_agent_keywords = {
-            "Win32": ["Windows NT", "Win64"],
-            "Linux x86_64": ["X11; Linux x86_64", "Linux; Android"],
-            "MacIntel": ["Macintosh"],
+            "All|Win32": ["Windows NT", "Win64"],
+            "All|Linux x86_64": ["X11; Linux x86_64", "Linux; Android"],
+            "All|MacIntel": ["Macintosh"],
         }
 
-    def _find_user_agent(self, platform):
-        keywords:list = self.user_agent_keywords.get(platform, list())
+    def find_user_agent(self, platform):
+        keywords = list()
+        for _uak_name, _uak_value in self.user_agent_keywords.items():
+            if _uak_name in platform:
+                keywords += _uak_value
         try:
-            for _ in range(100):  # max attempts
+            for _ in range(500):  # max attempts
                 ua = self.ua.random
                 if any(k in ua for k in keywords):
                     return ua
@@ -650,7 +653,7 @@ class FingerprintGenerator:
 
     def generate(self, platform=None, lang="en-US", timezone=None, viewport=None):
         platform = platform if platform else random.choice(self.platforms)
-        user_agent = self._find_user_agent(platform=platform)
+        user_agent = self.find_user_agent(platform=platform)
         headers = {
             "User-Agent": user_agent,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",

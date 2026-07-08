@@ -270,7 +270,7 @@ def get_score(*, score_str, p=' ', t='-', print_err=True):
     return score
 
 
-def get_clt(*, value: str, replace_list: None | list = None):
+def get_clt(*, value: None | str, replace_list: None | list = None):
     if not value:
         return value
     value = str(value).lower()
