@@ -743,9 +743,14 @@ def response_to_data(response, type_content, _dv=None):
         err = f'response_to_data: data not {type_content} error!'
     return err, _dv
 
-def get_check_connect(proxies=None, timeout=(10, 10)):
+def get_check_connect(proxies=None, timeout=(10, 10), urls=None):
+    urls = urls if urls else [
+        'https://www.google.com',
+        'https://api.ipify.org/?format=json',
+        'https://ipinfo.io/json'
+    ]
     try:
-        for url in ['https://www.google.com', 'https://api.ipify.org/?format=json', 'https://ipinfo.io/json']:
+        for url in urls:
             r = requests.get(url, proxies=proxies, timeout=timeout)
             if r.status_code == 200:
                 return True
