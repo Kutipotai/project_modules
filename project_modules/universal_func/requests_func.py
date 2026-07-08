@@ -570,49 +570,6 @@ def send_message_discord(*, msg, chat_id, token, **kwargs):
     return err, res
 
 
-def get_user_agent(list_ua, not_mobile=True):
-    _mobile = list()
-    if not_mobile:
-        _mobile = ['Mobile', 'Android', 'iPhone']
-    ua = UserAgent()
-    for _ in range(1_000):
-        user_agent = ua.chrome
-        if not [x for x in _mobile if x in user_agent] and not (user_agent in list_ua):
-            list_ua.append(user_agent)
-            return user_agent
-    return None
-
-
-def response_to_data(response, type_content, _dv=None):
-    err = None
-    if response is None:
-        err = f'response_to_data: {type_content} error!'
-        return err, _dv
-    try:
-        response.encoding = 'utf-8'
-        match type_content:
-            case 'text':
-                return err, response.text
-            case 'json':
-                return err, response.json()
-            case _:
-                return err, response
-    except:
-        err = f'response_to_data: data not {type_content} error!'
-    return err, _dv
-
-
-def get_check_connect(proxies=None, timeout=(10, 10)):
-    try:
-        for url in ['https://www.google.com', 'https://api.ipify.org/?format=json', 'https://ipinfo.io/json']:
-            r = requests.get(url, proxies=proxies, timeout=timeout)
-            if r.status_code == 200:
-                return True
-        return False
-    except:
-        return False
-
-
 class UserAgentFilter:
     def __init__(self, max_attempts=1000, default_ua=None):
         self.ua = UserAgent()
@@ -768,6 +725,33 @@ class FingerprintGenerator:
         }
         return headers
 
+def response_to_data(response, type_content, _dv=None):
+    err = None
+    if response is None:
+        err = f'response_to_data: {type_content} error!'
+        return err, _dv
+    try:
+        response.encoding = 'utf-8'
+        match type_content:
+            case 'text':
+                return err, response.text
+            case 'json':
+                return err, response.json()
+            case _:
+                return err, response
+    except:
+        err = f'response_to_data: data not {type_content} error!'
+    return err, _dv
+
+def get_check_connect(proxies=None, timeout=(10, 10)):
+    try:
+        for url in ['https://www.google.com', 'https://api.ipify.org/?format=json', 'https://ipinfo.io/json']:
+            r = requests.get(url, proxies=proxies, timeout=timeout)
+            if r.status_code == 200:
+                return True
+        return False
+    except:
+        return False
 
 class ProxyManager:
     def __init__(
