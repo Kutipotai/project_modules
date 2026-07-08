@@ -82,7 +82,6 @@ def get_content_old(
         params=None,
         headers=None,
         proxies=None,
-        timeout: None | tuple[float | int, float | int] = None,
         verify=True,
         _dv=None,
         print_err=True,
@@ -91,10 +90,9 @@ def get_content_old(
 ##    connect.auth = ('user', 'pass')
 ##    connect.verify = '/path/to/certfile' / False
     err, res = None, _dv
-    if timeout:
-        timeout = tuple(timeout)
-    else:
-        timeout = (15, 15)
+
+    timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    timeout = tuple(timeout) if timeout else (15, 15)
     if not headers:
         headers = dict()
     if not params:
@@ -135,7 +133,6 @@ def post_content_old(
         params=None,
         headers=None,
         proxies=None,
-        timeout:None|tuple[float|int, float|int]=None,
         verify=True,
         allow_redirects=None,
         params_key='json',
@@ -144,10 +141,8 @@ def post_content_old(
         **kwargs
 ):
     err, res = None, _dv
-    if timeout:
-        timeout = tuple(timeout)
-    else:
-        timeout = (15, 15)
+    timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    timeout = tuple(timeout) if timeout else (15, 15)
     if not headers:
         headers = dict()
     if not params:
@@ -495,11 +490,8 @@ def send_message_telegram(*, msg, chat_id, token, **kwargs):
     headers = {
         "Content-Type": "application/json"
     }
-    timeout = kwargs.get('timeout')
-    if timeout:
-        timeout = timeout
-    else:
-        timeout = (15, 15)
+    timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    timeout = tuple(timeout) if timeout else (15, 15)
     err, res = post_content(
         url=url,
         type_content='text',
@@ -528,11 +520,8 @@ def send_photo_from_bytes(chat_id, photo_bytes, token, msg=None, caption=None, *
     headers = {
         "Content-Type": "application/json"
     }
-    timeout = kwargs.get('timeout')
-    if timeout:
-        timeout = timeout
-    else:
-        timeout = (15, 15)
+    timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    timeout = tuple(timeout) if timeout else (15, 15)
     err, res = post_content(
         url=url,
         type_content='text',
@@ -553,11 +542,8 @@ def send_message_discord(*, msg, chat_id, token, **kwargs):
         "Authorization": f"Bot {token}",
         "Content-Type": "application/json"
     }
-    timeout = kwargs.get('timeout')
-    if timeout:
-        timeout = timeout
-    else:
-        timeout = (15, 15)
+    timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    timeout = tuple(timeout) if timeout else (15, 15)
     err, res = post_content(
         url=url,
         type_content='text',
@@ -743,7 +729,9 @@ def response_to_data(response, type_content, _dv=None):
         err = f'response_to_data: data not {type_content} error!'
     return err, _dv
 
-def get_check_connect(proxies=None, timeout=(10, 10), urls=None):
+def get_check_connect(proxies=None, urls=None, **kwargs):
+    timeout: None | tuple[float | int, float | int] = kwargs.get('timeout')
+    timeout = tuple(timeout) if timeout else (15, 15)
     urls = urls if urls else [
         'https://www.google.com',
         'https://api.ipify.org/?format=json',
