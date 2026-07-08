@@ -749,6 +749,8 @@ def get_check_connect(proxies=None, timeout=(10, 10), urls=None):
         'https://api.ipify.org/?format=json',
         'https://ipinfo.io/json'
     ]
+    if isinstance(proxies, dict):
+        proxies = _get_proxy(proxies=proxies)
     try:
         for url in urls:
             r = requests.get(url, proxies=proxies, timeout=timeout)
