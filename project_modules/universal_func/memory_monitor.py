@@ -31,3 +31,17 @@ class MemoryMonitor:
         gc.collect()
         return self.peak / (1024 ** 2)  # возвращаем в МБ
 
+if __name__ == '__main__':
+    from memory_monitor import MemoryMonitor
+
+    # ====================== ИСПОЛЬЗОВАНИЕ ======================
+
+    monitor = MemoryMonitor(interval=0.05)  # опрос каждые 50 мс
+    monitor.start()
+    try:
+        ...
+    except Exception as e:
+        ...
+    finally:
+        peak_mb = monitor.stop()
+        print(f"\nПиковое потребление памяти: {peak_mb:.1f} МБ ({peak_mb / 1024:.2f} ГБ)")
