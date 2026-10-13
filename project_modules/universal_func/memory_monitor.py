@@ -31,6 +31,7 @@ class MemoryMonitor:
         gc.collect()
         return self.peak / (1024 ** 2)  # возвращаем в МБ
 
+
 if __name__ == '__main__':
     from memory_monitor import MemoryMonitor
 

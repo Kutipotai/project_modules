@@ -5,11 +5,17 @@ import urllib.parse
 import urllib.request
 import random
 import uuid
+from typing import Any, NamedTuple
 from fake_useragent import UserAgent
 
 # import ssl
 # ssl._create_default_https_context = ssl._create_stdlib_context
 # pip install -U 'requests[socks]'
+
+
+class DataWithStatus(NamedTuple):
+    data: Any
+    status_code: int | None
 
 
 def _get_proxy(*, proxies, **kwargs):
@@ -183,6 +189,24 @@ def post_content_old(
     return err, res
 
 
+def is_ok_status(status_code, ok_codes=None) -> bool:
+    """
+    True, если status_code «успешный».
+
+    ok_codes:
+      - None           -> 200 <= code < 300
+      - int            -> code == ok_codes
+      - iterable[int]  -> code in ok_codes
+      - range          -> code in ok_codes
+    """
+    if status_code is None:
+        return False
+    if ok_codes is None:
+        return 200 <= status_code < 300
+    if isinstance(ok_codes, int):
+        return status_code == ok_codes
+    return status_code in ok_codes
+
 def get_content(
         *,
         url,
@@ -202,13 +226,21 @@ def get_content(
         max_size=0,  # 5 * 1024 * 1024
         chunk_size=8192,
 
+        with_status=False,
+
         **kwargs
 ):
-    err, res = None, _dv
+    status_code = None
     # start_time = time.time()
     timeout = tuple(timeout) if timeout else (15, 15)
     headers = headers or {}
     params = params or {}
+
+    def _pack(data):
+        if with_status:
+            return None, DataWithStatus(data, status_code)
+        return None, data
+
     try:
         request_func = connect.get if connect else requests.get
         request_kwargs = dict()
@@ -224,7 +256,7 @@ def get_content(
             stream=stream_mode,
             **request_kwargs
         )
-
+        status_code = response.status_code
         # fallback encoding
         if not response.encoding:
             response.encoding = 'utf-8'
@@ -232,10 +264,10 @@ def get_content(
         # 🔹 ОБЫЧНЫЙ режим (без stream)
         if not stream_mode:
             if type_content == 'text':
-                return err, response.text
+                return _pack(response.text)
             if type_content == 'json':
-                return err, response.json()
-            return err, response
+                return _pack(response.json())
+            return _pack(response)
 
         # 🔹 STREAM режим
         content = []
@@ -245,41 +277,34 @@ def get_content(
             # ⏱️ общий таймаут
             if time.time() - start_time > max_time:
                 raise TimeoutError(f"Total timeout exceeded ({max_time}s)")
-
             if not chunk:
                 continue
-
             total_size += len(chunk)
-
             # 📦 лимит размера
             if max_size and total_size > max_size:
                 raise ValueError(f"Response too large (> {max_size} bytes)")
-
             content.append(chunk)
 
         raw = b''.join(content)
-
         # 🔥 важно: закрываем соединение
         response.close()
-
         # 🔥 "восстанавливаем" response
         response._content = raw
         response._content_consumed = True
 
         # 🔹 единая логика возврата
         if type_content == 'text':
-            return err, response.text
-
+            return _pack(response.text)
         if type_content == 'json':
-            return err, response.json()
-
-        return err, response
+            return _pack(response.json())
+        return _pack(response)
 
     except Exception as e:
         if print_err:
             print('get_content:', repr(e))
+        if with_status:
+            return f"Error! --> {url}", DataWithStatus(_dv, status_code)
         return f"Error! --> {url}", _dv
-
 
 def post_content(
         *,
@@ -302,13 +327,21 @@ def post_content(
         max_size=0,  # 5 * 1024 * 1024
         chunk_size=8192,
 
+        with_status=False,
+
         **kwargs
 ):
-    err, res = None, _dv
+    status_code = None
     # start_time = time.time()
     timeout = tuple(timeout) if timeout else (15, 15)
     headers = headers or {}
     params = params or {}
+
+    def _pack(data):
+        if with_status:
+            return None, DataWithStatus(data, status_code)
+        return None, data
+
     try:
         request_func = connect.post if connect else requests.post
         request_kwargs = dict()
@@ -334,19 +367,17 @@ def post_content(
             stream=stream_mode,
             **request_kwargs,
         )
-
+        status_code = response.status_code
         if not response.encoding:
             response.encoding = 'utf-8'
 
         # 🔹 ОБЫЧНЫЙ режим
         if not stream_mode:
             if type_content == 'text':
-                return err, response.text
-
+                return _pack(response.text)
             if type_content == 'json':
-                return err, response.json()
-
-            return err, response
+                return _pack(response.json())
+            return _pack(response)
 
         # 🔹 STREAM режим
         content = []
@@ -356,39 +387,33 @@ def post_content(
             # ⏱️ общий таймаут
             if time.time() - start_time > max_time:
                 raise TimeoutError(f"Total timeout exceeded ({max_time}s)")
-
             if not chunk:
                 continue
-
             total_size += len(chunk)
-
             # 📦 лимит размера
             if max_size and total_size > max_size:
                 raise ValueError(f"Response too large (> {max_size} bytes)")
-
             content.append(chunk)
 
         raw = b''.join(content)
-
         # 🔥 закрываем соединение
         response.close()
-
         # 🔥 восстанавливаем response
         response._content = raw
         response._content_consumed = True
 
-        # 🔹 единая логика
+        # 🔹 единая логика возврата
         if type_content == 'text':
-            return err, response.text
-
+            return _pack(response.text)
         if type_content == 'json':
-            return err, response.json()
-
-        return err, response
+            return _pack(response.json())
+        return _pack(response)
 
     except Exception as e:
         if print_err:
             print('post_content:', repr(e))
+        if with_status:
+            return f"Error! --> {url}", DataWithStatus(_dv, status_code)
         return f"Error! --> {url}", _dv
 
 
