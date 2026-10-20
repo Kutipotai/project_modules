@@ -25,7 +25,6 @@ def write_file_text(*, file_name, data, typ='w', enc='utf-8', **kwargs):
     with open(f'{file_name}', typ, encoding=enc) as f:
         f.write(f'{data}\n')
 
-
 def read_file_text(*, file_name, typ='r', enc='utf-8', rl=False, **kwargs):
     with open(f'{file_name}', typ, encoding=enc) as f:
         if rl:
@@ -34,6 +33,26 @@ def read_file_text(*, file_name, typ='r', enc='utf-8', rl=False, **kwargs):
             res = f.read()
     return res
 
+def save_write_file_text(*, file_name, data, typ='w', enc='utf-8', print_err=True, **kwargs):
+    try:
+        write_file_text(file_name=file_name, data=data, typ=typ, enc=enc, **kwargs)
+    except Exception as e:
+        err = f'save_write_file_text: {e}'
+        if print_err:
+            print(err)
+        return err
+    return None
+
+def save_read_file_text(*, file_name, typ='r', enc='utf-8', rl=False, print_err=True, **kwargs):
+    err = None
+    try:
+        data = read_file_text(file_name=file_name, typ=typ, enc=enc, rl=rl, **kwargs)
+    except Exception as e:
+        err = f'save_write_file_text: {e}'
+        if print_err:
+            print(err)
+        return err, ''
+    return err, data
 
 def set_tsv(*, data, file_name, is_col_name=True):
     col_name = list()
