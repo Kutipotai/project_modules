@@ -48,7 +48,7 @@ def save_read_file_text(*, file_name, typ='r', enc='utf-8', rl=False, print_err=
     try:
         data = read_file_text(file_name=file_name, typ=typ, enc=enc, rl=rl, **kwargs)
     except Exception as e:
-        err = f'save_write_file_text: {e}'
+        err = f'save_read_file_text: {e}'
         if print_err:
             print(err)
         return err, ''
